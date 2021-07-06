@@ -15,32 +15,47 @@ const weatherData = require('./data/weather.json');
 // const { request, response } = require('express');
 
 
-
-server.get('/weather',(request,response)=>{
-    console.log(request.query);
-    
-        let cityObject = weatherData.find(cityWeather=> {if(cityWeather.lon == request.query.lon && cityWeather.lat == request.query.lat){
-        return cityWeather}
-        })
-        
-        response.status(200).send(cityObject);
-    
-})                                                                              
-
-server.get('*',(req,res)=>{
-    console.log('res');
-    res.status(404).send('City Not Found.')
-})
-
-
 server.listen(PORT,()=>{
     console.log("working")
 })
 
 
 class Forcast {
-    constructor(date,desciption){
+    constructor(date,description){
         this.date = date;
-        this.desciption = desciption;
-    }
+        this.description = description;
+    }  
 }
+
+server.get('/weather',(request,response)=>{
+    
+    response.status(200).send(getWeatherDailyDescription(request));
+    
+})                                                                              
+
+
+function findCity(request){
+    let cityObject = weatherData.find(city=> {if(city.lon == request.query.lon && city.lat == request.query.lat){
+        return city}
+        })
+    return cityObject
+}
+
+
+
+function getWeatherDailyDescription(request){
+    let arrayOfOneCityData =[];
+    let requestedCityObject = findCity(request)
+    for(let j=0; j<requestedCityObject.data.length; j++){
+        let cityWeatherDataForADay = new Forcast(requestedCityObject.data[j].valid_date,requestedCityObject.data[j].weather.description);
+        arrayOfOneCityData.push(cityWeatherDataForADay); 
+      }
+      return arrayOfOneCityData;
+}
+
+
+
+
+server.get('/test',(req,res)=>{
+    res.send('hi')
+})
