@@ -1,4 +1,5 @@
 'use strict';
+
 //we want to build an express server using JavaScript
 
 const express = require('express'); //to import 'express' library (already installed it)
@@ -7,14 +8,11 @@ const server = express(); //to use the properties & methods of express, I give t
 const cors = require('cors'); //gives the permitions for request to the chosen clients
 server.use(cors());
 
-const PORT = process.env.PORT;
+const PORT = 3001;
 
-// require('dotenv').config();
+const axios = require('axios');
 
-const weatherData = require('./data/weather.json');
-// const { request, response } = require('express');
-
-
+require('dotenv').config();
 
 
 class Forcast {
@@ -25,34 +23,25 @@ class Forcast {
 }
 
 server.get('/weather',(request,response)=>{
-    
-    let data = getWeatherDailyDescription(request);
-    response.status(200).send(data);
 
-    
+    let weatherDataFromAPI;
+    let requestedDataLink = `https://api.weatherbit.io/v2.0/forecast/daily?key=${process.env.WEATHER_API_KEY}&days=7&lon=${request.query.lon}&lat=${request.query.lat}`;
+
+
+    axios.get(requestedDataLink).then(weatherDataFromAPI => {
+
+        let arrayOfOneCityData =[];
+        console.log('weatherDataFromAPI.data.data');
+        weatherDataFromAPI.data.data.map((dayWeather)=>{
+                let WeatherDataForADay = new Forcast(dayWeather.datetime,dayWeather.weather.description);
+                arrayOfOneCityData.push(WeatherDataForADay);
+            })
+
+       console.log(arrayOfOneCityData);
+        response.status(200).send(arrayOfOneCityData);
+    });
+
 })                                                                              
-
-
-function findCity(request){
-    let cityObject = weatherData.find(city=> {if(city.lon == request.query.lon && city.lat == request.query.lat){
-        return city}
-        })
-
-    return cityObject
-}
-
-
-
-function getWeatherDailyDescription(request){
-    let arrayOfOneCityData =[];
-    let requestedCityObject = findCity(request)
-
-    for(let j=0; j<requestedCityObject.data.length; j++){
-        let cityWeatherDataForADay = new Forcast(requestedCityObject.data[j].valid_date,requestedCityObject.data[j].weather.description);
-        arrayOfOneCityData.push(cityWeatherDataForADay); 
-      }
-      return arrayOfOneCityData;
-}
 
 
 
