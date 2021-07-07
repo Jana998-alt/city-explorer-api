@@ -7,7 +7,7 @@ const server = express(); //to use the properties & methods of express, I give t
 const cors = require('cors'); //gives the permitions for request to the chosen clients
 server.use(cors());
 
-const PORT = 3001;
+const PORT = process.env.PORT;
 
 // require('dotenv').config();
 
@@ -15,9 +15,6 @@ const weatherData = require('./data/weather.json');
 // const { request, response } = require('express');
 
 
-server.listen(PORT,()=>{
-    console.log("working")
-})
 
 
 class Forcast {
@@ -29,7 +26,9 @@ class Forcast {
 
 server.get('/weather',(request,response)=>{
     
-    response.status(200).send(getWeatherDailyDescription(request));
+    let data = getWeatherDailyDescription(request);
+    response.status(200).send(data);
+
     
 })                                                                              
 
@@ -38,6 +37,7 @@ function findCity(request){
     let cityObject = weatherData.find(city=> {if(city.lon == request.query.lon && city.lat == request.query.lat){
         return city}
         })
+
     return cityObject
 }
 
@@ -46,6 +46,7 @@ function findCity(request){
 function getWeatherDailyDescription(request){
     let arrayOfOneCityData =[];
     let requestedCityObject = findCity(request)
+
     for(let j=0; j<requestedCityObject.data.length; j++){
         let cityWeatherDataForADay = new Forcast(requestedCityObject.data[j].valid_date,requestedCityObject.data[j].weather.description);
         arrayOfOneCityData.push(cityWeatherDataForADay); 
@@ -58,4 +59,14 @@ function getWeatherDailyDescription(request){
 
 server.get('/test',(req,res)=>{
     res.send('hi')
+})
+
+
+server.get('*',(req,res,error)=>{
+    res.send(error);
+})
+
+
+server.listen(PORT,()=>{
+    console.log("working")
 })
