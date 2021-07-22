@@ -8,38 +8,55 @@ const axios = require('axios');
 
 require('dotenv').config();
 
+let inMemory = {};
 
-class Forcast{
-    constructor(date,description,maxTemp,minTemp,cityName){
+
+class Forcast {
+    constructor(date, description, maxTemp, minTemp, cityName) {
         this.cityName = cityName;
         this.date = date;
         this.description = `Low of ${minTemp}, high of ${maxTemp} with ${description}`;
-    }  
+    }
 }
 
 
-function weatherServer(request,response){
+function weatherServer(request, response) {
+
+    let sQuery = `${request.query.lon} ${request.query.lat}` ;
+
 
     let weatherDataFromAPI;
     let requestedDataLink = `https://api.weatherbit.io/v2.0/forecast/daily?key=${process.env.WEATHER_API_KEY}&days=7&lon=${request.query.lon}&lat=${request.query.lat}`;
 
+    if (inMemory[sQuery] !== undefined) {
+        console.log('in Memory is defined');
+        console.log(sQuery);
+        response.send(inMemory[sQuery]);
+    }
 
-    axios.get(requestedDataLink).then(weatherDataFromAPI => {
+    else {
+        console.log('is memory is undefined');
+        console.log(sQuery);
 
-        let arrayOfOneCityData =[]; 
+        axios.get(requestedDataLink).then(weatherDataFromAPI => {
 
-        weatherDataFromAPI.data.data.map((dayWeather)=>{
-            
-                let WeatherDataForADay = new Forcast(dayWeather.valid_date,dayWeather.weather.description,dayWeather.max_temp,dayWeather.low_temp,request.query.city);
-        
+            let arrayOfOneCityData = [];
+
+            weatherDataFromAPI.data.data.map((dayWeather) => {
+
+                let WeatherDataForADay = new Forcast(dayWeather.valid_date, dayWeather.weather.description, dayWeather.max_temp, dayWeather.low_temp, request.query.city);
+
                 arrayOfOneCityData.push(WeatherDataForADay);
             })
 
-            
-        response.status(200).send(arrayOfOneCityData);
-    });
+            inMemory[sQuery] = arrayOfOneCityData;  //bracket notation to make a new property for an object
+            response.status(200).send(arrayOfOneCityData);
+        });
+    }
+
+
 
 }
 
-                  
+
 module.exports = weatherServer;
